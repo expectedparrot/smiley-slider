@@ -1,273 +1,227 @@
+(function (global) {
+    "use strict";
 
-function SmileySlider(container, imgSrc) {
-    if (!imgSrc)
-        imgSrc = "smiley-slider.png"
-
-    var width = 329
-    var height = 37
-    
-    var headWidth = 40
-    var maxHeadX = width - headWidth + 1
-    
-    var base = document.createElement('div')
-    base.style.width = width + "px"
-    base.style.height = height + "px"
-    base.style.background = "white"
-    
-    var track = document.createElement('div')
-    track.style.width = width + "px"
-    track.style.height = 6 + "px"
-    track.style.marginRight = '-' + track.style.width
-    track.style.marginBottom = '-' + track.style.height
-    track.style.position = "relative"
-    track.style.top = 15 + "px"
-    track.style.background = "url('" + imgSrc + "')"
-    base.appendChild(track)
-    
-    var head = document.createElement('div')
-    head.style.width = headWidth + "px"
-    head.style.height = height + "px"
-    head.style.marginRight = '-' + head.style.width
-    head.style.marginBottom = '-' + head.style.height
-    head.style.position = "relative"
-    head.style.background = "url('" + imgSrc + "') scroll 0px -6px"
-    base.appendChild(head)
-
-    var face = document.createElement('canvas')
-    face.style.width = 36 + "px"
-    face.style.height = 37 + "px"
-    face.style.position = "relative"
-    face.style.left = 4 + "px"
-    face.width = "36"
-    face.height = "37"
-    head.appendChild(face)
-    
-    var glass = document.createElement('div')
-    glass.style.width = width + "px"
-    glass.style.height = height + "px"
-    glass.style.marginRight = '-' + glass.style.width
-    glass.style.marginBottom = '-' + glass.style.height
-    glass.style.position = "relative"
-    base.appendChild(glass)
-    
-    container.appendChild(base)
-
-    //////////////////////////////////////////////////////////////
-    // head position
-    
-    var onHeadMove = null
-    
-    function positionInt(e) {
-        if (e === undefined) {
-            return getPos(head).x - getPos(base).x
-        } else {
-            head.style.left = Math.round(cap(e, 0, maxHeadX)) + "px"
-            var p = position()
-            drawFace(face, 100, p, 0.8)
-            if (onHeadMove) onHeadMove(p)
-        }
-    }
-    
-    function position(e) {
-        if (e === undefined) {
-            return lerp(0, 0, maxHeadX, 1, positionInt())
-        } else if (typeof(e) == "function") {
-            onHeadMove = e
-        } else {
-            positionInt(lerp(0, 0, 1, maxHeadX, e))
-        }
-    }
-    
-    this.position = position    
-    setTimeout(function () {
-        position(0.5)
-    }, 0)
-
-    //////////////////////////////////////////////////////////////
-    // mouse
-
-    glass.onmousedown = function (e) {
-        e.preventDefault()
-        var pos = getRelPos(glass, e)
-        
-        var grabX = headWidth / 2
-        var headX = positionInt()
-        if (pos.x >= headX && pos.x < headX + headWidth) {
-            grabX = pos.x - headX
-        }
-        
-        positionInt(pos.x - grabX)
-
-        var oldMove = document.onmousemove
-        document.onmousemove = function (e) {
-            var pos = getRelPos(glass, e)
-            
-            positionInt(pos.x - grabX)
-        }
-        
-        var oldUp = document.onmouseup
-        document.onmouseup = function (e) {
-            document.onmousemove = oldMove
-            document.onmouseup = oldUp
-        }
-    }
-
-    //////////////////////////////////////////////////////////////
-    // touch
-
-    glass.ontouchstart = function (e) {
-        e.preventDefault()
-        var pos = getRelPos(glass, e.touches[0])
-
-        var grabX = headWidth / 2
-        var headX = positionInt()
-        if (pos.x >= headX && pos.x < headX + headWidth) {
-            grabX = pos.x - headX
+    function SmileySlider(container, imageSource) {
+        if (!(container instanceof Element)) {
+            throw new TypeError("SmileySlider requires a container element");
         }
 
-        positionInt(pos.x - grabX)
+        var image = imageSource || "smiley-slider.png";
+        var width = 329;
+        var height = 37;
+        var headWidth = 40;
+        var value = 0.5;
+        var onChange = null;
 
-        var oldMove = document.ontouchmove
-        document.ontouchmove = function (e) {
-            e.preventDefault();
-            var pos = getRelPos(glass, e.touches[0])
-            positionInt(pos.x - grabX)
+        var base = element("div", {
+            position: "relative",
+            width: "100%",
+            maxWidth: width + "px",
+            height: height + "px",
+            margin: "0 auto",
+            background: "white"
+        });
+
+        var track = element("div", {
+            position: "absolute",
+            top: "15px",
+            left: "0",
+            width: "100%",
+            height: "6px",
+            background: "url('" + image + "') left top / " + width + "px " + (height + 6) + "px"
+        });
+
+        var head = element("div", {
+            position: "absolute",
+            top: "0",
+            left: "0",
+            width: headWidth + "px",
+            height: height + "px",
+            background: "url('" + image + "') 0 -6px / " + width + "px " + (height + 6) + "px"
+        });
+
+        var face = document.createElement("canvas");
+        face.width = 36;
+        face.height = 37;
+        face.style.cssText = "position:relative;left:4px;width:36px;height:37px";
+        head.appendChild(face);
+
+        var control = element("div", {
+            position: "absolute",
+            inset: "0",
+            cursor: "grab",
+            touchAction: "none",
+            outlineOffset: "6px"
+        });
+        control.tabIndex = 0;
+        control.setAttribute("role", "slider");
+        control.setAttribute("aria-label", "Happiness");
+        control.setAttribute("aria-valuemin", "0");
+        control.setAttribute("aria-valuemax", "100");
+
+        base.appendChild(track);
+        base.appendChild(head);
+        base.appendChild(control);
+        container.appendChild(base);
+
+        function render(notify) {
+            var availableWidth = Math.max(0, base.clientWidth - headWidth);
+            head.style.left = Math.round(value * availableWidth) + "px";
+            control.setAttribute("aria-valuenow", String(Math.round(value * 100)));
+            control.setAttribute("aria-valuetext", Math.round(value * 100) + "% happy");
+            drawFace(face, value);
+            if (notify && onChange) onChange(value);
         }
 
-        var oldEnd = document.ontouchend;
-        var oldCancel = document.ontouchcancel
-        document.ontouchend = document.ontouchcancel = function (e) {
-            document.ontouchmove = oldMove
-            document.ontouchend = oldEnd
-            document.ontouchcancel = oldCancel;
+        function resize() {
+            render(false);
         }
-    }
 
-    //////////////////////////////////////////////////////////////
-    // core drawing code
-    
-    var PI180 = Math.PI / 180;
-	
-    function drawFace(canvas, radius, emotion, innerScale) {
-        emotion = Math.max(0, Math.min(1, emotion));
-        var diam = radius * 2;
-        
-        var ctx = canvas.getContext('2d');
-        ctx.clearRect (0, 0, diam, diam);
+        function setValue(nextValue, notify) {
+            value = clamp(Number(nextValue), 0, 1);
+            render(notify !== false);
+        }
 
-        ctx.beginPath();
-        ctx.fillStyle = '#414084'; 
-        drawSmile(ctx, 15.5, 20, innerScale, emotion);
-        ctx.closePath();
-        ctx.fill();
-        
-        ctx.beginPath();
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = '#414084';
-        drawEyeBrows(ctx, 9.5, 16, 23, 16, 7, 5, emotion);
-        ctx.stroke();
-    };
+        function valueFromPointer(event) {
+            var bounds = base.getBoundingClientRect();
+            var availableWidth = Math.max(1, bounds.width - headWidth);
+            return (event.clientX - bounds.left - headWidth / 2) / availableWidth;
+        }
 
-    function drawSmile(context, mainRadius, offsetY, innerScale, emotion) {
-        var eased = 1 - easeInQuad(emotion, 0, 1, 1);
-        var innerScale = innerScale - (eased * 0.4);
-        var curveOffset = easeInCubic(emotion, 0.1, 0.6, 1);
-        drawArc(context, mainRadius, offsetY, innerScale, emotion);
-        drawArc(context, mainRadius, offsetY, innerScale, emotion, curveOffset, true);
+        function pointerDown(event) {
+            event.preventDefault();
+            control.setPointerCapture(event.pointerId);
+            control.style.cursor = "grabbing";
+            setValue(valueFromPointer(event));
+        }
+
+        function pointerMove(event) {
+            if (!control.hasPointerCapture(event.pointerId)) return;
+            setValue(valueFromPointer(event));
+        }
+
+        function pointerUp(event) {
+            if (control.hasPointerCapture(event.pointerId)) {
+                control.releasePointerCapture(event.pointerId);
+            }
+            control.style.cursor = "grab";
+        }
+
+        function keyDown(event) {
+            var next = value;
+            if (event.key === "ArrowLeft" || event.key === "ArrowDown") next -= 0.05;
+            else if (event.key === "ArrowRight" || event.key === "ArrowUp") next += 0.05;
+            else if (event.key === "Home") next = 0;
+            else if (event.key === "End") next = 1;
+            else return;
+
+            event.preventDefault();
+            setValue(next);
+        }
+
+        control.addEventListener("pointerdown", pointerDown);
+        control.addEventListener("pointermove", pointerMove);
+        control.addEventListener("pointerup", pointerUp);
+        control.addEventListener("pointercancel", pointerUp);
+        control.addEventListener("keydown", keyDown);
+        window.addEventListener("resize", resize);
+
+        this.position = function (next) {
+            if (next === undefined) return value;
+            if (typeof next === "function") {
+                onChange = next;
+                onChange(value);
+                return this;
+            }
+            setValue(next);
+            return this;
+        };
+
+        this.destroy = function () {
+            window.removeEventListener("resize", resize);
+            container.removeChild(base);
+        };
+
+        render(false);
     }
 
-    function easeInCubic(t, b, c, d) {
-        return c*(t/=d)*t*t + b;
+    function element(tagName, styles) {
+        var node = document.createElement(tagName);
+        Object.assign(node.style, styles);
+        return node;
     }
 
-    function easeInQuad(t, b, c, d) {
-        return c*(t/=d)*t + b;
+    function clamp(value, minimum, maximum) {
+        if (!Number.isFinite(value)) return minimum;
+        return Math.min(maximum, Math.max(minimum, value));
     }
 
-    function drawArc(context, mainRadius, offsetY, innerScale, emotion, curveOffset, reverseX) {
-        curveOffset = (curveOffset === undefined) ? 0 : curveOffset;
-        
-        var innerRadius = mainRadius * innerScale;
-        var pad = mainRadius - innerRadius;
-        var diam = innerRadius * 2;
-        
-        var SEGS = 16;
-        
-        var theta = 360 / SEGS;
-        var emoScale = (emotion - 0.5) * 2;
-        
-        var sides = [pad, pad + diam];
-        var ct = [[0, 0], [0, 0]];
-        
-        ct[0][0] = innerRadius * Math.cos((theta * 3) * PI180) + pad ;
-        ct[0][1] = innerRadius * Math.sin((theta * 3) * PI180) * emoScale + offsetY + pad - (curveOffset * mainRadius);
-        
-        ct[1][0] = innerRadius * Math.cos((theta * 5) * PI180) + pad + (innerRadius * 2);
-        ct[1][1] = innerRadius * Math.sin((theta * 5) * PI180) * emoScale + offsetY + pad - (curveOffset * mainRadius);
-        
-        if (reverseX) {
+    function drawFace(canvas, emotion) {
+        var context = canvas.getContext("2d");
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        context.beginPath();
+        context.fillStyle = "#414084";
+        drawSmile(context, 15.5, 20, 0.8, emotion);
+        context.fill();
+
+        context.beginPath();
+        context.lineWidth = 1;
+        context.strokeStyle = "#414084";
+        drawEyebrows(context, 9.5, 16, 23, 16, 7, 5, emotion);
+        context.stroke();
+    }
+
+    function drawSmile(context, radius, offsetY, innerScale, emotion) {
+        var eased = 1 - emotion * emotion;
+        var scale = innerScale - eased * 0.4;
+        var curveOffset = emotion * emotion * emotion * 0.6 + 0.1;
+        drawArc(context, radius, offsetY, scale, emotion, 0, false);
+        drawArc(context, radius, offsetY, scale, emotion, curveOffset, true);
+    }
+
+    function drawArc(context, radius, offsetY, innerScale, emotion, curveOffset, reverse) {
+        var innerRadius = radius * innerScale;
+        var padding = radius - innerRadius;
+        var diameter = innerRadius * 2;
+        var theta = 360 / 16;
+        var emotionScale = (emotion - 0.5) * 2;
+        var sides = [padding, padding + diameter];
+        var controls = [
+            [innerRadius * cosine(theta * 3) + padding, innerRadius * sine(theta * 3) * emotionScale + offsetY + padding - curveOffset * radius],
+            [innerRadius * cosine(theta * 5) + padding + innerRadius * 2, innerRadius * sine(theta * 5) * emotionScale + offsetY + padding - curveOffset * radius]
+        ];
+
+        if (reverse) {
             sides.reverse();
-            ct.reverse();
+            controls.reverse();
         }
-        
-        context.moveTo(sides[0], offsetY + pad);
-        context.bezierCurveTo(ct[0][0], ct[0][1], ct[1][0], ct[1][1], sides[1], offsetY + pad);
+        context.moveTo(sides[0], offsetY + padding);
+        context.bezierCurveTo(controls[0][0], controls[0][1], controls[1][0], controls[1][1], sides[1], offsetY + padding);
     }
 
-    function drawEyeBrows(context, x1, y1, x2, y2, width, distance, emotion) {
-        var a = (emotion - 0.5) * 30;
-        var hW = width * 0.5;
-        
-        var l1 = rotZ(-hW, -distance, -a);
-        var l2 = rotZ(hW , -distance, -a);
-        
-        var r1 = rotZ(-hW, -distance, a);
-        var r2 = rotZ(hW , -distance, a);
-        
-        context.moveTo(l1[0] + x1, l1[1] + y1);
-        context.lineTo(l2[0] + x1, l2[1] + y1);
-        
-        context.moveTo(r1[0] + x2, r1[1] + y2);
-        context.lineTo(r2[0] + x2, r2[1] + y2);
+    function drawEyebrows(context, x1, y1, x2, y2, width, distance, emotion) {
+        var angle = (emotion - 0.5) * 30;
+        var halfWidth = width / 2;
+        var leftStart = rotate(-halfWidth, -distance, -angle);
+        var leftEnd = rotate(halfWidth, -distance, -angle);
+        var rightStart = rotate(-halfWidth, -distance, angle);
+        var rightEnd = rotate(halfWidth, -distance, angle);
+
+        context.moveTo(leftStart[0] + x1, leftStart[1] + y1);
+        context.lineTo(leftEnd[0] + x1, leftEnd[1] + y1);
+        context.moveTo(rightStart[0] + x2, rightStart[1] + y2);
+        context.lineTo(rightEnd[0] + x2, rightEnd[1] + y2);
     }
 
-    function rotZ(x, y, angle) {
-        var cos = Math.cos(angle * PI180);
-        var sin = Math.sin(angle * PI180);
-        var tx = x * cos - y * sin;
-        var ty = x * sin + y * cos;
-        return [tx, ty];
-    }
-    
-    //////////////////////////////////////////////////////////////
-    // utils
-    
-    function cap(t, mi, ma) {
-        if (t < mi) return mi
-        if (t > ma) return ma
-        return t
+    function rotate(x, y, angle) {
+        var cos = cosine(angle);
+        var sin = sine(angle);
+        return [x * cos - y * sin, x * sin + y * cos];
     }
 
-    function lerp(t0, v0, t1, v1, t) {
-        return (t - t0) * (v1 - v0) / (t1 - t0) + v0
-    }
-    
-    function getPos(e) {
-        var x = 0, y = 0
-        while (e != null) {
-            x += e.offsetLeft
-            y += e.offsetTop
-            e = e.offsetParent
-        }
-        return {x : x, y : y}
-    }
-    
-    function getRelPos(to, positionedObject) {
-        var pos = getPos(to)
-        return {
-            x : positionedObject.pageX - pos.x,
-            y : positionedObject.pageY - pos.y
-        }
-    }
-}
+    function cosine(degrees) { return Math.cos(degrees * Math.PI / 180); }
+    function sine(degrees) { return Math.sin(degrees * Math.PI / 180); }
 
+    global.SmileySlider = SmileySlider;
+}(window));
