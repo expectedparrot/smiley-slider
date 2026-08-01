@@ -1,6 +1,6 @@
 # Smiley Slider
 
-A dependency-free slider whose expression changes from sad to happy.
+A dependency-free SVG slider whose expression changes from sad to happy.
 
 [Try the live demo](https://expectedparrot.github.io/smiley-slider/)
 
@@ -24,4 +24,4 @@ A dependency-free slider whose expression changes from sad to happy.
 </script>
 ```
 
-The slider supports mouse, touch, pen, and keyboard input. Pass a second argument to the constructor to use a different sprite image.
+The slider supports mouse, touch, pen, and keyboard input. Its track, head, eyes, eyebrows, and continuously changing mouth are rendered as inline SVG, so no image assets are required.
