@@ -80,11 +80,20 @@
             var mouthEndpointY = 33 - value * 4;
             var upperMouthY = 24 + value * 5;
             var lowerMouthY = 28 + Math.pow(value, 2) * 16;
+            var happyEase = Math.pow(value, 2);
+            var mouthLeftX = 10 - happyEase * 5;
+            var mouthRightX = 30 + happyEase * 5;
+            var eyeRadiusX = 2.7 - happyEase * 0.5;
+            var eyeRadiusY = 3.1 - happyEase * 0.8;
 
             face.setAttribute("transform", "translate(" + x + " 0)");
             leftEyebrow.setAttribute("transform", "rotate(" + -eyebrowAngle + " 14 17)");
             rightEyebrow.setAttribute("transform", "rotate(" + eyebrowAngle + " 26 17)");
-            mouth.setAttribute("d", "M 10 " + mouthEndpointY + " Q 20 " + upperMouthY + " 30 " + mouthEndpointY + " Q 20 " + lowerMouthY + " 10 " + mouthEndpointY + " Z");
+            leftEye.setAttribute("rx", eyeRadiusX);
+            leftEye.setAttribute("ry", eyeRadiusY);
+            rightEye.setAttribute("rx", eyeRadiusX);
+            rightEye.setAttribute("ry", eyeRadiusY);
+            mouth.setAttribute("d", "M " + mouthLeftX + " " + mouthEndpointY + " Q 20 " + upperMouthY + " " + mouthRightX + " " + mouthEndpointY + " Q 20 " + lowerMouthY + " " + mouthLeftX + " " + mouthEndpointY + " Z");
             svg.setAttribute("aria-valuenow", String(Math.round(value * 100)));
             svg.setAttribute("aria-valuetext", Math.round(value * 100) + "% happy");
 
