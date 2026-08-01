@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A dependency-free slider whose expression changes from sad to happy.">
+    <title>Smiley Slider</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: #25243f;
+            background: #f6f5ff;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+        }
+
+        main {
+            width: min(100%, 520px);
+            padding: 48px 40px;
+            text-align: center;
+            background: white;
+            border: 1px solid #e2e0f2;
+            border-radius: 18px;
+            box-shadow: 0 18px 50px rgba(65, 64, 132, 0.12);
+        }
+
+        h1 { margin: 0 0 10px; font-size: clamp(2rem, 7vw, 3rem); }
+        p { margin: 0; color: #626079; line-height: 1.6; }
+
+        #slider {
+            width: 329px;
+            max-width: 100%;
+            margin: 52px auto 28px;
+        }
+
+        output {
+            display: block;
+            margin-bottom: 36px;
+            font-weight: 700;
+            color: #414084;
+        }
+
+        a { color: #414084; }
+        a:hover { text-decoration-thickness: 2px; }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>How are you feeling?</h1>
+        <p>Drag, click, tap, or use the arrow keys.</p>
+        <div id="slider"></div>
+        <output id="rating" for="slider">50% happy</output>
+        <a href="https://github.com/expectedparrot/smiley-slider">View the source on GitHub</a>
+    </main>
+
+    <script src="smiley-slider.js"></script>
+    <script>
+        const rating = document.getElementById("rating");
+        const slider = new SmileySlider(document.getElementById("slider"));
+
+        slider.position((value) => {
+            rating.value = `${Math.round(value * 100)}% happy`;
+        });
+    </script>
+</body>
+</html>
