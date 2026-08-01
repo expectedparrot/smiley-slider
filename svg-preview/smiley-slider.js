@@ -77,13 +77,14 @@
         function render(notify) {
             var x = value * maximumHeadX;
             var eyebrowAngle = (value - 0.5) * 24;
-            var upperMouthY = 16 + value * 13;
-            var lowerMouthY = 20 + value * 20 + Math.pow(value, 2) * 4;
+            var mouthEndpointY = 33 - value * 4;
+            var upperMouthY = 24 + value * 5;
+            var lowerMouthY = 28 + Math.pow(value, 2) * 16;
 
             face.setAttribute("transform", "translate(" + x + " 0)");
             leftEyebrow.setAttribute("transform", "rotate(" + -eyebrowAngle + " 14 17)");
             rightEyebrow.setAttribute("transform", "rotate(" + eyebrowAngle + " 26 17)");
-            mouth.setAttribute("d", "M 10 30 Q 20 " + upperMouthY + " 30 30 Q 20 " + lowerMouthY + " 10 30 Z");
+            mouth.setAttribute("d", "M 10 " + mouthEndpointY + " Q 20 " + upperMouthY + " 30 " + mouthEndpointY + " Q 20 " + lowerMouthY + " 10 " + mouthEndpointY + " Z");
             svg.setAttribute("aria-valuenow", String(Math.round(value * 100)));
             svg.setAttribute("aria-valuetext", Math.round(value * 100) + "% happy");
 
