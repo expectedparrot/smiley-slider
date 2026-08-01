@@ -31,8 +31,9 @@
             y1: height / 2,
             x2: width - headSize / 2,
             y2: height / 2,
-            stroke: "#aaa8c9",
-            "stroke-width": "3",
+            stroke: "#7775aa",
+            "stroke-width": "1.25",
+            "stroke-opacity": "0.72",
             "stroke-linecap": "round"
         });
 
@@ -43,28 +44,29 @@
             r: "18.5",
             fill: "white",
             stroke: "#414084",
-            "stroke-width": "1.5"
+            "stroke-width": "1.1"
         });
-        var leftEye = svgElement("circle", { cx: "14", cy: "22", r: "1.5", fill: "#414084" });
-        var rightEye = svgElement("circle", { cx: "26", cy: "22", r: "1.5", fill: "#414084" });
+        var leftEye = svgElement("ellipse", { cx: "14", cy: "22", rx: "2.7", ry: "3.1", fill: "#414084" });
+        var rightEye = svgElement("ellipse", { cx: "26", cy: "22", rx: "2.7", ry: "3.1", fill: "#414084" });
+        var leftEyeHighlight = svgElement("circle", { cx: "13.2", cy: "21.1", r: "0.8", fill: "white" });
+        var rightEyeHighlight = svgElement("circle", { cx: "25.2", cy: "21.1", r: "0.8", fill: "white" });
         var leftEyebrow = svgElement("line", {
             x1: "10.5", y1: "17", x2: "17.5", y2: "17",
-            stroke: "#414084", "stroke-width": "1.5", "stroke-linecap": "round"
+            stroke: "#414084", "stroke-width": "1.15", "stroke-linecap": "round"
         });
         var rightEyebrow = svgElement("line", {
             x1: "22.5", y1: "17", x2: "29.5", y2: "17",
-            stroke: "#414084", "stroke-width": "1.5", "stroke-linecap": "round"
+            stroke: "#414084", "stroke-width": "1.15", "stroke-linecap": "round"
         });
         var mouth = svgElement("path", {
-            fill: "none",
-            stroke: "#414084",
-            "stroke-width": "2",
-            "stroke-linecap": "round"
+            fill: "#414084"
         });
 
         face.appendChild(head);
         face.appendChild(leftEye);
         face.appendChild(rightEye);
+        face.appendChild(leftEyeHighlight);
+        face.appendChild(rightEyeHighlight);
         face.appendChild(leftEyebrow);
         face.appendChild(rightEyebrow);
         face.appendChild(mouth);
@@ -74,13 +76,14 @@
 
         function render(notify) {
             var x = value * maximumHeadX;
-            var eyebrowAngle = (value - 0.5) * 28;
-            var mouthControlY = 18 + value * 22;
+            var eyebrowAngle = (value - 0.5) * 24;
+            var upperMouthY = 16 + value * 13;
+            var lowerMouthY = 20 + value * 20 + Math.pow(value, 2) * 4;
 
             face.setAttribute("transform", "translate(" + x + " 0)");
             leftEyebrow.setAttribute("transform", "rotate(" + -eyebrowAngle + " 14 17)");
             rightEyebrow.setAttribute("transform", "rotate(" + eyebrowAngle + " 26 17)");
-            mouth.setAttribute("d", "M 10 30 Q 20 " + mouthControlY + " 30 30");
+            mouth.setAttribute("d", "M 10 30 Q 20 " + upperMouthY + " 30 30 Q 20 " + lowerMouthY + " 10 30 Z");
             svg.setAttribute("aria-valuenow", String(Math.round(value * 100)));
             svg.setAttribute("aria-valuetext", Math.round(value * 100) + "% happy");
 
